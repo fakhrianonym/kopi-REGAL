@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Riwayat Transaksi - Regal Coffe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>
+tailwind.config = { theme: { extend: { fontFamily: { serif: ['"Playfair Display"', 'serif'], sans: ['Inter', 'sans-serif'] } } } };
+</script>
+</head>
+<body class="min-h-screen bg-[#F7F3EE] font-sans text-[#2B2B2B]">
+<header class="flex flex-wrap items-center gap-x-3 gap-y-3 border-b border-[#6F4E37] px-4 py-3 lg:h-20 lg:flex-nowrap lg:gap-8 lg:px-7 lg:py-0">
+<div class="grid h-10 w-10 shrink-0 place-items-center rounded-full border-[3px] border-[#6F4E37] font-serif text-2xl text-[#6F4E37] lg:h-12 lg:w-12 lg:border-4 lg:text-3xl">R</div>
+<span class="whitespace-nowrap font-serif text-2xl text-[#6F4E37] lg:text-4xl">Regal Coffe</span>
+<nav class="order-last flex w-full gap-2 overflow-x-auto pb-1 lg:order-none lg:w-auto lg:gap-3 lg:overflow-visible lg:pb-0">
+<a href="/admin" class="shrink-0 whitespace-nowrap rounded-full border border-gray-200 bg-white px-4 py-2 text-sm lg:px-5">Dashboard</a>
+<a href="/admin/menu" class="shrink-0 whitespace-nowrap rounded-full border border-gray-200 bg-white px-4 py-2 text-sm lg:px-5">Kelola Menu</a>
+<a href="/admin/riwayat" class="shrink-0 whitespace-nowrap rounded-full bg-[#6F4E37] px-4 py-2 text-sm text-white lg:px-5">Riwayat Transaksi</a>
+<a href="/admin/laporan" class="shrink-0 whitespace-nowrap rounded-full border border-gray-200 bg-white px-4 py-2 text-sm lg:px-5">Laporan</a>
+</nav>
+<span id="namaAdmin" class="hidden text-sm text-gray-500 lg:ml-auto lg:block"></span>
+<button onclick="keluar()" class="ml-auto rounded-full border-2 border-[#D64545] px-4 py-1.5 text-xs font-bold text-[#D64545] lg:ml-0 lg:px-6 lg:py-2 lg:text-sm">Keluar</button>
+</header>
+
+<main class="p-4 lg:p-8">
+<h1 class="font-serif text-3xl font-bold lg:text-4xl">Riwayat Transaksi</h1>
+<p class="mt-2 text-xs text-gray-500">Semua transaksi kasir &middot; klik baris untuk melihat detail</p>
+
+<div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3 lg:mt-6 lg:gap-6">
+<div class="rounded-2xl border border-gray-200 bg-white p-4"><p class="text-xs text-gray-500">Penjualan</p><p id="cPenjualan" class="mt-1 text-2xl font-bold text-[#6F4E37] lg:text-3xl">Rp0</p></div>
+<div class="rounded-2xl border border-gray-200 bg-white p-4"><p class="text-xs text-gray-500">Transaksi</p><p id="cTransaksi" class="mt-1 text-2xl font-bold text-[#6F4E37] lg:text-3xl">0</p></div>
+<div class="rounded-2xl border border-gray-200 bg-white p-4"><p class="text-xs text-gray-500">Total HPP</p><p id="cHpp" class="mt-1 text-2xl font-bold text-[#6F4E37] lg:text-3xl">0</p></div>
+</div>
+
+<div class="mt-6">
+<div class="relative">
+<svg class="absolute left-4 top-3.5 h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+<input id="kolomCari" oninput="cari()" onkeydown="if (event.key == 'Escape') { hapusCari(); }" autocomplete="off" class="h-12 w-full rounded-xl border border-gray-200 bg-white pl-12 pr-12 text-sm" placeholder="Cari no. transaksi, pelanggan, menu, channel, metode, tanggal">
+<button id="btnHapusCari" onclick="hapusCari()" aria-label="Hapus pencarian" class="absolute right-3 top-2.5 hidden h-7 w-7 rounded-full text-xl leading-none text-gray-500 hover:bg-gray-100">&times;</button>
+</div>
+<p id="infoCari" class="mt-2 text-xs text-gray-500"></p>
+</div>
+
+<table class="mt-4 w-full text-left text-xs sm:text-sm">
+<thead><tr class="border-b border-[#6F4E37]"><th class="pb-3 pl-2">No. Transaksi</th><th class="pb-3">Tanggal</th><th class="hidden pb-3 sm:table-cell">Channel</th><th class="pb-3">Pelanggan</th><th class="pb-3 pr-2">Total</th></tr></thead>
+<tbody id="tabel"></tbody>
+</table>
+<p id="kosong" class="mt-6 hidden text-sm text-gray-500">Belum ada transaksi.</p>
+
+<div class="mt-12 border-t border-gray-200 pt-4">
+<button onclick="resetData()" class="text-xs font-bold text-[#D64545] underline">Reset semua data (hapus permanen)</button>
+</div>
+</main>
+
+<!-- Panel detail: muncul dari kanan saat baris diklik -->
+<div id="latar" onclick="tutupDetail()" class="fixed inset-0 z-10 hidden bg-black/20 lg:top-20"></div>
+<aside id="panel" class="fixed bottom-0 right-0 top-0 z-20 hidden w-full flex-col overflow-y-auto border-l border-[#6F4E37] bg-[#F7F3EE] p-4 sm:w-[420px] sm:p-6 lg:top-20">
+<div class="flex items-start justify-between">
+<h2 id="dJudul" class="font-serif text-3xl font-bold">Detail</h2>
+<button onclick="tutupDetail()" aria-label="Tutup" class="h-8 w-8 rounded-full text-2xl leading-none text-gray-500 hover:bg-white">&times;</button>
+</div>
+<div class="mt-3 border-t border-[#6F4E37] pt-3 text-sm leading-6">
+<p>Tanggal : <span id="dTanggal"></span></p><p>Channel : <span id="dChannel"></span></p><p>Pelanggan : <span id="dPelanggan"></span></p><p>Metode : <span id="dMetode"></span></p>
+</div>
+<div id="dItems" class="mt-3 max-h-[40vh] space-y-3 overflow-y-auto border-y border-[#6F4E37] py-3"></div>
+<div class="mt-3 space-y-2">
+<div class="flex justify-between"><span>Total Harga</span><span id="dTotal"></span></div>
+<div class="flex justify-between"><span>Total HPP</span><span id="dHpp"></span></div>
+</div>
+<div class="mt-auto border-t border-[#6F4E37] pt-4">
+<button id="btnBatal" onclick="batalkan()" class="block w-full rounded-full border-2 border-[#D64545] bg-white py-3 text-sm font-bold text-[#D64545]">Batalkan transaksi</button>
+<button id="btnCetak" onclick="cetakUlang()" class="mt-3 block w-full rounded-full bg-[#6F4E37] py-3 text-sm font-bold text-white">Cetak Ulang</button>
+</div>
+</aside>
+
+<script>
+var riwayat = [];     // semua transaksi dari server (urut dari yang lama)
+var terpilih = -1;    // nomor transaksi yang detailnya sedang dibuka
+var kataKunci = "";
+
+function rupiah(angka) {
+  return "Rp" + Number(angka).toLocaleString("id-ID");
+}
+
+// Buat elemen dengan teks aman (tidak memakai innerHTML)
+function el(tag, kelas, teks) {
+  var e = document.createElement(tag);
+  if (kelas) { e.className = kelas; }
+  if (teks !== undefined) { e.textContent = teks; }
+  return e;
+}
+
+function cocok(t) {
+  if (kataKunci == "") { return true; }
+
+  var tgl = t.tanggal.split("-");
+  var teks = [
+    t.no, t.tanggal,
+    tgl[2] + "-" + tgl[1] + "-" + tgl[0],
+    tgl[2] + "/" + tgl[1] + "/" + tgl[0],
+    t.channel, t.pelanggan, t.metode,
+    String(t.total), t.total.toLocaleString("id-ID")
+  ];
+  for (var i = 0; i < t.items.length; i++) {
+    teks.push(t.items[i].nama, t.items[i].kode);
+  }
+  var gabungan = teks.join(" ").toLowerCase();
+
+  var kata = kataKunci.split(" ");
+  for (var k = 0; k < kata.length; k++) {
+    if (kata[k] != "" && gabungan.indexOf(kata[k]) == -1) { return false; }
+  }
+  return true;
+}
+
+function cari() {
+  kataKunci = document.getElementById("kolomCari").value.trim().toLowerCase();
+  tampilkan();
+}
+
+function hapusCari() {
+  var kolom = document.getElementById("kolomCari");
+  kolom.value = "";
+  kolom.focus();
+  cari();
+}
+
+function cariIndeks(no) {
+  for (var i = 0; i < riwayat.length; i++) {
+    if (riwayat[i].no == no) { return i; }
+  }
+  return -1;
+}
+
+async function muatRiwayat() {
+  try {
+    var res = await fetch("/api/transaksi");
+    if (res.status == 401) { window.location.href = "/login.html"; return; }
+    if (res.ok == false) { throw new Error("Server menjawab " + res.status); }
+    riwayat = await res.json();
+  } catch (err) {
+    alert("Riwayat gagal dimuat: " + err.message);
+  }
+  tampilkan();
+}
+
+// ===== Kartu, pencarian, dan tabel =====
+function tampilkan() {
+  var totalPenjualan = 0;
+  var totalHpp = 0;
+  var jumlahCocok = 0;
+  for (var i = 0; i < riwayat.length; i++) {
+    if (cocok(riwayat[i]) == false) { continue; }
+    jumlahCocok = jumlahCocok + 1;
+    totalPenjualan = totalPenjualan + riwayat[i].total;
+    totalHpp = totalHpp + riwayat[i].hpp;
+  }
+  document.getElementById("cPenjualan").textContent = rupiah(totalPenjualan);
+  document.getElementById("cTransaksi").textContent = jumlahCocok;
+  document.getElementById("cHpp").textContent = totalHpp.toLocaleString("id-ID");
+
+  document.getElementById("btnHapusCari").classList.toggle("hidden", kataKunci == "");
+  document.getElementById("infoCari").textContent =
+    "Menampilkan " + jumlahCocok + " dari " + riwayat.length + " transaksi";
+
+  // Transaksi terbaru di paling atas
+  var tbody = document.getElementById("tabel");
+  tbody.innerHTML = "";
+  for (var j = riwayat.length - 1; j >= 0; j--) {
+    var t = riwayat[j];
+    if (cocok(t) == false) { continue; }
+    var baris = el("tr", "cursor-pointer " + (t.no == terpilih ? "bg-[#F2E8DC]" : "hover:bg-[#F2E8DC]/60"));
+    baris.setAttribute("data-no", t.no);
+    baris.onclick = function () { bukaDetail(this.getAttribute("data-no")); };
+    var kolom = [t.no, t.tanggal, t.channel, t.pelanggan, rupiah(t.total)];
+    for (var k = 0; k < kolom.length; k++) {
+      var kelas = "py-3 " + (k == 0 ? "rounded-l-xl pl-2" : (k == kolom.length - 1 ? "rounded-r-xl pr-2" : "")) + (k == 2 ? " hidden sm:table-cell" : "");
+      baris.appendChild(el("td", kelas, kolom[k]));
+    }
+    tbody.appendChild(baris);
+  }
+
+  var pesanKosong = document.getElementById("kosong");
+  pesanKosong.textContent = riwayat.length == 0 ? "Belum ada transaksi." : "Tidak ada transaksi yang cocok dengan pencarian.";
+  pesanKosong.classList.toggle("hidden", jumlahCocok > 0);
+}
+
+// ===== Panel detail =====
+function bukaDetail(no) {
+  var indeks = cariIndeks(no);
+  if (indeks < 0) { return; }
+  terpilih = no;
+  var d = riwayat[indeks];
+
+  document.getElementById("dJudul").textContent = "Detail " + d.no;
+  document.getElementById("dTanggal").textContent = d.tanggal;
+  document.getElementById("dChannel").textContent = d.channel;
+  document.getElementById("dPelanggan").textContent = d.pelanggan;
+  document.getElementById("dMetode").textContent = d.metode;
+
+  var kotak = document.getElementById("dItems");
+  kotak.innerHTML = "";
+  for (var m = 0; m < d.items.length; m++) {
+    var it = d.items[m];
+    var blok = el("div");
+    blok.appendChild(el("p", "", it.jumlah + "x " + it.nama + " (" + it.kode + ")"));
+    var baris = el("div", "flex justify-between");
+    baris.appendChild(el("span", "text-sm text-gray-500", rupiah(it.harga)));
+    baris.appendChild(el("span", "text-sm", rupiah(it.harga * it.jumlah)));
+    blok.appendChild(baris);
+    kotak.appendChild(blok);
+  }
+  document.getElementById("dTotal").textContent = d.total.toLocaleString("id-ID");
+  document.getElementById("dHpp").textContent = d.hpp.toLocaleString("id-ID");
+
+  document.getElementById("latar").classList.remove("hidden");
+  var panel = document.getElementById("panel");
+  panel.classList.remove("hidden");
+  panel.classList.add("flex");
+  tampilkan();   // sorot baris yang dipilih
+}
+
+function tutupDetail() {
+  terpilih = -1;
+  document.getElementById("latar").classList.add("hidden");
+  var panel = document.getElementById("panel");
+  panel.classList.add("hidden");
+  panel.classList.remove("flex");
+  tampilkan();
+}
+
+document.addEventListener("keydown", function (e) {
+  if (e.key == "Escape" && terpilih != -1) { tutupDetail(); }
+});
+
+// ===== Aksi =====
+async function batalkan() {
+  if (terpilih == -1) { return; }
+  var no = terpilih;
+  if (confirm("Batalkan transaksi " + no + "?") == false) { return; }
+
+  try {
+    var res = await fetch("/api/transaksi/" + encodeURIComponent(no) + "/batal", { method: "PATCH" });
+    if (res.status == 401) { window.location.href = "/login.html"; return; }
+    if (res.ok == false) { throw new Error("Gagal membatalkan transaksi"); }
+    tutupDetail();
+    await muatRiwayat();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function cetakUlang() {
+  if (terpilih == -1) { return; }
+  window.location.href = "/struk.html?no=" + encodeURIComponent(terpilih);
+}
+
+async function resetData() {
+  var jawab = prompt("Ini akan MENGHAPUS SEMUA transaksi di database dan tidak bisa dibatalkan.\nKetik RESET untuk melanjutkan:");
+  if (jawab !== "RESET") { return; }
+
+  try {
+    var res = await fetch("/api/transaksi", { method: "DELETE" });
+    if (res.status == 401) { window.location.href = "/login.html"; return; }
+    if (res.ok == false) { throw new Error("Gagal reset data"); }
+    tutupDetail();
+    await muatRiwayat();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function tampilkanNama() {
+  try {
+    var res = await fetch("/api/admin/check");
+    if (res.status == 401) { window.location.href = "/login.html"; return; }
+    var d = await res.json();
+    document.getElementById("namaAdmin").textContent = "Halo, " + d.admin.username;
+  } catch (err) {}
+}
+
+async function keluar() {
+  await fetch("/api/admin/logout", { method: "POST" });
+  window.location.href = "/login.html";
+}
+
+tampilkanNama();
+muatRiwayat();
+</script>
+</body>
+</html>

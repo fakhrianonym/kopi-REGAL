@@ -1,0 +1,17 @@
+{
+  "name": "kopi-regal",
+  "version": "1.0.0",
+  "description": "Aplikasi kasir Kopi Regal",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "tes": "node tes_db.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "express": "^5.3.0",
+    "express-session": "^1.19.0",
+    "mysql2": "^3.24.6"
+  }
+}

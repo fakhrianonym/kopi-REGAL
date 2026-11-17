@@ -1,0 +1,694 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kelola Menu - Regal Coffe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              serif: ['"Playfair Display"', "serif"],
+              sans: ["Inter", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="min-h-screen bg-[#F7F3EE] font-sans text-[#2B2B2B]">
+    <header class="flex flex-wrap items-center gap-x-3 gap-y-3 border-b border-[#6F4E37] px-4 py-3 lg:h-20 lg:flex-nowrap lg:gap-8 lg:px-7 lg:py-0">
+<div class="grid h-10 w-10 shrink-0 place-items-center rounded-full border-[3px] border-[#6F4E37] font-serif text-2xl text-[#6F4E37] lg:h-12 lg:w-12 lg:border-4 lg:text-3xl">R</div>
+<span class="whitespace-nowrap font-serif text-2xl text-[#6F4E37] lg:text-4xl">Regal Coffe</span>
+<nav class="order-last flex w-full gap-2 overflow-x-auto pb-1 lg:order-none lg:w-auto lg:gap-3 lg:overflow-visible lg:pb-0">
+<a href="/admin" class="shrink-0 whitespace-nowrap rounded-full border border-gray-200 bg-white px-4 py-2 text-sm lg:px-5">Dashboard</a>
+<a href="/admin/menu" class="shrink-0 whitespace-nowrap rounded-full bg-[#6F4E37] px-4 py-2 text-sm text-white lg:px-5">Kelola Menu</a>
+<a href="/admin/riwayat" class="shrink-0 whitespace-nowrap rounded-full border border-gray-200 bg-white px-4 py-2 text-sm lg:px-5">Riwayat Transaksi</a>
+<a href="/admin/laporan" class="shrink-0 whitespace-nowrap rounded-full border border-gray-200 bg-white px-4 py-2 text-sm lg:px-5">Laporan</a>
+</nav>
+<span id="namaAdmin" class="hidden text-sm text-gray-500 lg:ml-auto lg:block"></span>
+<button onclick="keluar()" class="ml-auto rounded-full border-2 border-[#D64545] px-4 py-1.5 text-xs font-bold text-[#D64545] lg:ml-0 lg:px-6 lg:py-2 lg:text-sm">Keluar</button>
+</header>
+
+    <main class="flex flex-col lg:min-h-[calc(100vh-5rem)] lg:flex-row">
+      <section class="min-w-0 flex-1 p-4 lg:p-8">
+        <div class="flex items-start justify-between">
+          <div>
+            <h1 class="font-serif text-3xl font-bold lg:text-4xl">Kelola Menu</h1>
+            <p class="mt-2 text-xs text-gray-500">
+              Atur daftar menu, harga jual, HPP, dan ketersediaan
+            </p>
+          </div>
+          <button
+            onclick="mulaiTambah()"
+            class="shrink-0 rounded-full bg-[#6F4E37] px-4 py-2.5 text-xs font-bold text-white lg:px-6 lg:py-3 lg:text-sm"
+          >
+            + Tambah Menu
+          </button>
+        </div>
+
+        <div class="mt-5 grid grid-cols-2 gap-3 lg:mt-6 lg:gap-4 xl:grid-cols-4">
+          <div class="rounded-2xl border border-gray-200 bg-white p-4">
+            <p class="text-xs text-gray-500">Total Menu</p>
+            <p id="sTotal" class="mt-1 text-2xl font-bold text-[#6F4E37] lg:text-3xl">0</p>
+          </div>
+          <div class="rounded-2xl border border-gray-200 bg-white p-4">
+            <p class="text-xs text-gray-500">Tersedia</p>
+            <p id="sTersedia" class="mt-1 text-2xl font-bold text-[#6F4E37] lg:text-3xl">
+              0
+            </p>
+          </div>
+          <div class="rounded-2xl border border-gray-200 bg-white p-4">
+            <p class="text-xs text-gray-500">Habis</p>
+            <p id="sHabis" class="mt-1 text-2xl font-bold text-[#6F4E37] lg:text-3xl">0</p>
+          </div>
+          <div class="rounded-2xl border border-gray-200 bg-white p-4">
+            <p class="text-xs text-gray-500">Rata-rata Margin</p>
+            <p id="sMargin" class="mt-1 text-2xl font-bold text-[#6F4E37] lg:text-3xl">
+              0%
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-5 flex flex-col gap-3 lg:mt-6 lg:flex-row lg:items-center lg:gap-4">
+          <div class="relative flex-1">
+            <svg
+              class="absolute left-4 top-3.5 h-5 w-5 text-gray-500"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-4-4" />
+            </svg>
+            <input
+              id="kolomCari"
+              oninput="cari()"
+              autocomplete="off"
+              class="h-12 w-full rounded-xl border border-gray-200 bg-white pl-12 text-sm"
+              placeholder="Cari kode atau nama menu"
+            />
+          </div>
+          <div id="filterKategori" class="flex flex-wrap gap-2 lg:gap-3"></div>
+        </div>
+
+        <table class="mt-5 w-full text-left text-xs sm:text-sm lg:mt-6">
+          <thead>
+            <tr class="border-b border-[#6F4E37]">
+              <th class="hidden pb-3 pl-2 sm:table-cell">Kode</th>
+              <th class="pb-3 pl-2 sm:pl-0">Nama Menu</th>
+              <th class="hidden pb-3 sm:table-cell">Kategori</th>
+              <th class="pb-3">Harga Jual</th>
+              <th class="hidden pb-3 sm:table-cell lg:hidden xl:table-cell">HPP</th>
+              <th class="hidden pb-3 sm:table-cell lg:hidden xl:table-cell">Margin</th>
+              <th class="pb-3">Status</th>
+              <th class="hidden pb-3 pr-2 sm:table-cell">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tabel"></tbody>
+        </table>
+        <p id="kosong" class="mt-6 hidden text-sm text-gray-500"></p>
+      </section>
+
+      <aside id="panelForm" class="flex flex-col w-full border-t border-[#6F4E37] p-4 lg:w-[420px] lg:border-l lg:border-t-0 lg:p-6">
+        <h2 id="judulForm" class="font-serif text-2xl font-bold">Edit Menu</h2>
+        <p id="subJudulForm" class="mt-1 text-xs text-gray-500"></p>
+        <div class="mt-3 border-t border-[#6F4E37] pt-4">
+          <label class="block text-xs text-gray-500">Kode Menu</label>
+          <input
+            id="fKode"
+            readonly
+            class="mt-1 h-11 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm text-gray-500"
+          />
+
+          <label class="mt-3 block text-xs text-gray-500">Nama Menu</label>
+          <input
+            id="fNama"
+            maxlength="100"
+            autocomplete="off"
+            class="mt-1 h-11 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm"
+          />
+
+          <label class="mt-3 block text-xs text-gray-500">Kategori</label>
+          <select
+            id="fKategori"
+            class="mt-1 h-11 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm"
+          ></select>
+
+          <div class="mt-3 grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-gray-500">Harga Jual</label
+              ><input
+                id="fHarga"
+                inputmode="numeric"
+                autocomplete="off"
+                oninput="
+                  formatRupiah(this);
+                  hitungLaba();
+                "
+                class="mt-1 h-11 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm"
+              />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500">HPP</label
+              ><input
+                id="fHpp"
+                inputmode="numeric"
+                autocomplete="off"
+                oninput="
+                  formatRupiah(this);
+                  hitungLaba();
+                "
+                class="mt-1 h-11 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm"
+              />
+            </div>
+          </div>
+
+          <div
+            class="mt-3 flex items-center justify-between rounded-xl bg-[#F2E8DC] px-4 py-3 text-sm"
+          >
+            <span class="text-gray-500">Laba per porsi</span
+            ><span id="fLaba" class="font-bold text-[#5A3E2B]">-</span>
+          </div>
+
+          <div class="mt-4 flex items-center justify-between">
+            <div>
+              <p class="text-sm font-bold">Tersedia di kasir</p>
+              <p class="text-xs text-gray-500">Matikan jika bahan habis</p>
+            </div>
+            <button
+              id="toggle"
+              type="button"
+              role="switch"
+              aria-checked="true"
+              onclick="ubahToggle()"
+              class="relative h-7 w-12 rounded-full bg-[#6F4E37] transition-colors"
+            >
+              <span
+                id="knob"
+                class="absolute top-0.5 h-6 w-6 rounded-full bg-white transition-all"
+              ></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-auto pt-6">
+          <p
+            id="pesanForm"
+            class="mb-3 min-h-[1.25rem] text-center text-sm"
+          ></p>
+          <button
+            id="btnSimpan"
+            onclick="simpan()"
+            class="block w-full rounded-full bg-[#6F4E37] py-3 text-sm font-bold text-white"
+          >
+            Simpan Perubahan
+          </button>
+          <button
+            onclick="batal()"
+            class="mt-3 block w-full rounded-full border-2 border-[#6F4E37] bg-white py-3 text-sm font-bold text-[#6F4E37]"
+          >
+            Batal
+          </button>
+          <button
+            id="btnHapus"
+            onclick="hapus()"
+            class="mt-3 block w-full rounded-full border-2 border-[#D64545] bg-white py-3 text-sm font-bold text-[#D64545]"
+          >
+            Hapus Menu
+          </button>
+        </div>
+      </aside>
+    </main>
+
+    <script>
+      var semuaMenu = [];
+      var daftarKategori = [];
+      var filterAktif = "Semua";
+      var kataKunci = "";
+      var kodeTerpilih = null; // kode menu yang sedang diedit
+      var modeTambah = false; // true = form untuk menu baru
+      var tersedia = true; // status tombol "Tersedia di kasir"
+      var sedangProses = false;
+
+      function rupiah(angka) {
+        return "Rp" + Number(angka).toLocaleString("id-ID");
+      }
+
+      // Buat elemen dengan teks aman (tidak memakai innerHTML)
+      function el(tag, kelas, teks) {
+        var e = document.createElement(tag);
+        if (kelas) {
+          e.className = kelas;
+        }
+        if (teks !== undefined) {
+          e.textContent = teks;
+        }
+        return e;
+      }
+
+      function hitungMargin(harga, hpp) {
+        return harga > 0 ? Math.round(((harga - hpp) / harga) * 100) : 0;
+      }
+
+      // Panggil API. Kalau sesi habis (401) langsung ke halaman login.
+      async function panggil(url, opsi) {
+        var res = await fetch(url, opsi);
+        if (res.status == 401) {
+          window.location.href = "/login.html";
+          throw new Error("Sesi habis, silakan login lagi.");
+        }
+        var hasil = {};
+        try {
+          hasil = await res.json();
+        } catch (e) {}
+        if (res.ok == false) {
+          throw new Error(hasil.error || "Server error " + res.status);
+        }
+        return hasil;
+      }
+
+      function kirim(metode, url, data) {
+        return panggil(url, {
+          method: metode,
+          headers: { "Content-Type": "application/json" },
+          body: data ? JSON.stringify(data) : undefined,
+        });
+      }
+
+      function cariMenu(kode) {
+        for (var i = 0; i < semuaMenu.length; i++) {
+          if (semuaMenu[i].kode == kode) {
+            return semuaMenu[i];
+          }
+        }
+        return null;
+      }
+
+      // ===== Kartu ringkasan =====
+      function gambarStat() {
+        var jumlahTersedia = 0;
+        var totalMargin = 0;
+        for (var i = 0; i < semuaMenu.length; i++) {
+          if (semuaMenu[i].aktif) {
+            jumlahTersedia = jumlahTersedia + 1;
+          }
+          totalMargin =
+            totalMargin + hitungMargin(semuaMenu[i].harga, semuaMenu[i].hpp);
+        }
+        document.getElementById("sTotal").textContent = semuaMenu.length;
+        document.getElementById("sTersedia").textContent = jumlahTersedia;
+        document.getElementById("sHabis").textContent =
+          semuaMenu.length - jumlahTersedia;
+        document.getElementById("sMargin").textContent =
+          (semuaMenu.length > 0
+            ? Math.round(totalMargin / semuaMenu.length)
+            : 0) + "%";
+      }
+
+      // ===== Tombol filter kategori (diambil dari database) =====
+      function gambarFilter() {
+        var kotak = document.getElementById("filterKategori");
+        kotak.innerHTML = "";
+        var nama = ["Semua"];
+        for (var i = 0; i < daftarKategori.length; i++) {
+          nama.push(daftarKategori[i].nama);
+        }
+
+        for (var j = 0; j < nama.length; j++) {
+          var tombol = el(
+            "button",
+            filterAktif == nama[j]
+              ? "rounded-full bg-[#6F4E37] px-5 py-2 text-sm text-white"
+              : "rounded-full border border-gray-200 bg-white px-5 py-2 text-sm",
+            nama[j],
+          );
+          tombol.setAttribute("data-nama", nama[j]);
+          tombol.onclick = function () {
+            filterAktif = this.getAttribute("data-nama");
+            gambarFilter();
+            gambarTabel();
+          };
+          kotak.appendChild(tombol);
+        }
+      }
+
+      function cari() {
+        kataKunci = document
+          .getElementById("kolomCari")
+          .value.trim()
+          .toLowerCase();
+        gambarTabel();
+      }
+
+      // ===== Tabel menu =====
+      function gambarTabel() {
+        var tbody = document.getElementById("tabel");
+        tbody.innerHTML = "";
+        var tampil = 0;
+
+        for (var i = 0; i < semuaMenu.length; i++) {
+          var m = semuaMenu[i];
+          if (filterAktif != "Semua" && m.kategori != filterAktif) {
+            continue;
+          }
+          if (
+            kataKunci != "" &&
+            (m.nama + " " + m.kode).toLowerCase().indexOf(kataKunci) == -1
+          ) {
+            continue;
+          }
+          tampil = tampil + 1;
+
+          var dipilih = modeTambah == false && m.kode == kodeTerpilih;
+          var baris = el(
+            "tr",
+            "cursor-pointer " +
+              (dipilih ? "bg-[#F2E8DC]" : "hover:bg-[#F2E8DC]/50"),
+          );
+          baris.setAttribute("data-kode", m.kode);
+          baris.onclick = function () {
+            pilihMenu(this.getAttribute("data-kode"));
+          };
+
+          baris.appendChild(
+            el("td", "hidden rounded-l-xl py-3 pl-2 text-gray-500 sm:table-cell", m.kode),
+          );
+          baris.appendChild(el("td", "rounded-l-xl py-3 pl-2 font-bold sm:rounded-none sm:pl-0", m.nama));
+          baris.appendChild(el("td", "hidden py-3 sm:table-cell", m.kategori));
+          baris.appendChild(el("td", "whitespace-nowrap py-3", rupiah(m.harga)));
+          baris.appendChild(el("td", "hidden py-3 sm:table-cell lg:hidden xl:table-cell", rupiah(m.hpp)));
+          baris.appendChild(
+            el("td", "hidden py-3 sm:table-cell lg:hidden xl:table-cell", hitungMargin(m.harga, m.hpp) + "%"),
+          );
+
+          var sel = el("td", "rounded-r-xl py-3 pr-2 sm:rounded-none sm:pr-0");
+          sel.appendChild(
+            el(
+              "span",
+              "rounded-full px-2.5 py-0.5 text-[11px] font-semibold " +
+                (m.aktif
+                  ? "bg-[#DDEFE3] text-[#2F7D4F]"
+                  : "bg-[#FBE1E1] text-[#D64545]"),
+              m.aktif ? "Tersedia" : "Habis",
+            ),
+          );
+          baris.appendChild(sel);
+          baris.appendChild(
+            el("td", "hidden rounded-r-xl py-3 pr-2 font-bold text-[#6F4E37] sm:table-cell", "Edit"),
+          );
+          tbody.appendChild(baris);
+        }
+
+        var pesan = document.getElementById("kosong");
+        pesan.textContent =
+          semuaMenu.length == 0
+            ? "Belum ada menu."
+            : "Tidak ada menu yang cocok.";
+        pesan.classList.toggle("hidden", tampil > 0);
+      }
+
+      // ===== Form di kanan =====
+      function pesan(teks, berhasil) {
+        var e = document.getElementById("pesanForm");
+        e.textContent = teks;
+        e.className =
+          "mb-3 min-h-[1.25rem] text-center text-sm " +
+          (berhasil ? "text-green-700" : "text-[#D64545]");
+      }
+
+      function gambarToggle() {
+        var tombol = document.getElementById("toggle");
+        tombol.setAttribute("aria-checked", tersedia ? "true" : "false");
+        tombol.className =
+          "relative h-7 w-12 rounded-full transition-colors " +
+          (tersedia ? "bg-[#6F4E37]" : "bg-gray-300");
+        document.getElementById("knob").style.left = tersedia ? "22px" : "2px";
+      }
+
+      function ubahToggle() {
+        tersedia = !tersedia;
+        gambarToggle();
+      }
+
+      function formatRupiah(kolom) {
+        var angka = kolom.value.replace(/[^0-9]/g, "");
+        kolom.value =
+          angka == "" ? "" : "Rp" + Number(angka).toLocaleString("id-ID");
+      }
+
+      function ambilAngka(id) {
+        var teks = document.getElementById(id).value.replace(/[^0-9]/g, "");
+        return teks == "" ? NaN : Number(teks);
+      }
+
+      function hitungLaba() {
+        var harga = ambilAngka("fHarga");
+        var hpp = ambilAngka("fHpp");
+        var e = document.getElementById("fLaba");
+        if (isNaN(harga) || isNaN(hpp)) {
+          e.textContent = "-";
+          e.className = "font-bold text-[#5A3E2B]";
+          return;
+        }
+        var laba = harga - hpp;
+        e.textContent =
+          (laba < 0 ? "-" : "") +
+          rupiah(Math.abs(laba)) +
+          " · " +
+          hitungMargin(harga, hpp) +
+          "%";
+        e.className =
+          "font-bold " + (laba < 0 ? "text-[#D64545]" : "text-[#5A3E2B]");
+      }
+
+      function isiKategori() {
+        var pilihan = document.getElementById("fKategori");
+        pilihan.innerHTML = "";
+        for (var i = 0; i < daftarKategori.length; i++) {
+          var o = el("option", "", daftarKategori[i].nama);
+          o.value = daftarKategori[i].id;
+          pilihan.appendChild(o);
+        }
+      }
+
+      function isiForm() {
+        pesan("", true);
+        var tombolSimpan = document.getElementById("btnSimpan");
+        var tombolHapus = document.getElementById("btnHapus");
+
+        if (modeTambah) {
+          document.getElementById("judulForm").textContent = "Tambah Menu";
+          document.getElementById("subJudulForm").textContent = "Menu baru";
+          document.getElementById("fKode").value = "Otomatis";
+          document.getElementById("fNama").value = "";
+          if (daftarKategori.length > 0) {
+            document.getElementById("fKategori").value = daftarKategori[0].id;
+          }
+          document.getElementById("fHarga").value = "";
+          document.getElementById("fHpp").value = "";
+          tersedia = true;
+          tombolSimpan.textContent = "Simpan Menu";
+          tombolHapus.classList.add("hidden");
+        } else {
+          var m = cariMenu(kodeTerpilih);
+          if (m == null) {
+            document.getElementById("judulForm").textContent = "Edit Menu";
+            document.getElementById("subJudulForm").textContent =
+              "Pilih menu di tabel";
+            document.getElementById("fKode").value = "";
+            document.getElementById("fNama").value = "";
+            document.getElementById("fHarga").value = "";
+            document.getElementById("fHpp").value = "";
+            tersedia = true;
+          } else {
+            document.getElementById("judulForm").textContent = "Edit Menu";
+            document.getElementById("subJudulForm").textContent =
+              m.kode + " · " + m.nama;
+            document.getElementById("fKode").value = m.kode;
+            document.getElementById("fNama").value = m.nama;
+            document.getElementById("fKategori").value = m.id_kategori;
+            document.getElementById("fHarga").value = rupiah(m.harga);
+            document.getElementById("fHpp").value = rupiah(m.hpp);
+            tersedia = m.aktif;
+          }
+          tombolSimpan.textContent = "Simpan Perubahan";
+          tombolHapus.classList.toggle("hidden", m == null);
+        }
+        gambarToggle();
+        hitungLaba();
+      }
+
+      // Di layar kecil form ada di bawah tabel, jadi layar digulir ke form
+      function keForm() {
+        if (window.innerWidth < 1024) {
+          document
+            .getElementById("panelForm")
+            .scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+
+      function pilihMenu(kode) {
+        modeTambah = false;
+        kodeTerpilih = kode;
+        gambarTabel();
+        isiForm();
+        keForm();
+      }
+
+      function mulaiTambah() {
+        modeTambah = true;
+        kodeTerpilih = null;
+        gambarTabel();
+        isiForm();
+        keForm();
+        document.getElementById("fNama").focus();
+      }
+
+      function batal() {
+        if (modeTambah) {
+          modeTambah = false;
+          kodeTerpilih = semuaMenu.length > 0 ? semuaMenu[0].kode : null;
+          gambarTabel();
+        }
+        isiForm(); // kembalikan isian ke data yang tersimpan
+      }
+
+      async function simpan() {
+        if (sedangProses) {
+          return;
+        }
+        var data = {
+          nama: document.getElementById("fNama").value.trim(),
+          id_kategori: Number(document.getElementById("fKategori").value),
+          harga: ambilAngka("fHarga"),
+          hpp: ambilAngka("fHpp"),
+          aktif: tersedia,
+        };
+        if (data.nama == "") {
+          pesan("Nama menu wajib diisi.", false);
+          return;
+        }
+        if (isNaN(data.harga) || data.harga < 1) {
+          pesan("Harga jual wajib diisi.", false);
+          return;
+        }
+        if (isNaN(data.hpp)) {
+          pesan("HPP wajib diisi (isi 0 kalau belum ada).", false);
+          return;
+        }
+
+        sedangProses = true;
+        var tombol = document.getElementById("btnSimpan");
+        tombol.textContent = "Menyimpan...";
+        try {
+          if (modeTambah) {
+            var baru = await kirim("POST", "/api/admin/menu", data);
+            modeTambah = false;
+            await muat(baru.kode);
+            pesan("Menu " + baru.kode + " ditambahkan.", true);
+          } else {
+            await kirim(
+              "PUT",
+              "/api/admin/menu/" + encodeURIComponent(kodeTerpilih),
+              data,
+            );
+            await muat(kodeTerpilih);
+            pesan("Perubahan disimpan.", true);
+          }
+        } catch (err) {
+          pesan(err.message, false);
+          tombol.textContent = modeTambah ? "Simpan Menu" : "Simpan Perubahan";
+        }
+        sedangProses = false;
+      }
+
+      async function hapus() {
+        if (sedangProses || modeTambah || kodeTerpilih == null) {
+          return;
+        }
+        var m = cariMenu(kodeTerpilih);
+        if (m == null) {
+          return;
+        }
+        if (
+          confirm(
+            "Hapus menu " +
+              m.kode +
+              " - " +
+              m.nama +
+              "? Ini tidak bisa dibatalkan.",
+          ) == false
+        ) {
+          return;
+        }
+
+        sedangProses = true;
+        try {
+          await kirim(
+            "DELETE",
+            "/api/admin/menu/" + encodeURIComponent(m.kode),
+          );
+          await muat(null);
+        } catch (err) {
+          pesan(err.message, false);
+        }
+        sedangProses = false;
+      }
+
+      // Ambil data dari server, lalu gambar ulang semuanya
+      async function muat(kodePilih) {
+        try {
+          var d = await panggil("/api/admin/menu");
+          semuaMenu = d.menu;
+          daftarKategori = d.kategori;
+          isiKategori();
+          gambarFilter();
+          gambarStat();
+
+          if (kodePilih != null && cariMenu(kodePilih) != null) {
+            kodeTerpilih = kodePilih;
+          } else if (cariMenu(kodeTerpilih) == null) {
+            kodeTerpilih = semuaMenu.length > 0 ? semuaMenu[0].kode : null;
+          }
+          gambarTabel();
+          isiForm();
+        } catch (err) {
+          document.getElementById("kosong").textContent =
+            "Menu gagal dimuat: " + err.message;
+          document.getElementById("kosong").classList.remove("hidden");
+        }
+      }
+
+      async function tampilkanNama() {
+        try {
+          var res = await fetch("/api/admin/check");
+          if (res.status == 401) {
+            window.location.href = "/login.html";
+            return;
+          }
+          var d = await res.json();
+          document.getElementById("namaAdmin").textContent =
+            "Halo, " + d.admin.username;
+        } catch (err) {}
+      }
+
+      async function keluar() {
+        await fetch("/api/admin/logout", { method: "POST" });
+        window.location.href = "/login.html";
+      }
+
+      tampilkanNama();
+      muat(null);
+    </script>
+  </body>
+</html>

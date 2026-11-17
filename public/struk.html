@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Struk - Regal Coffe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>
+tailwind.config = { theme: { extend: { fontFamily: { serif: ['"Playfair Display"', 'serif'], sans: ['Inter', 'sans-serif'] } } } };
+</script>
+</head>
+<body class="min-h-screen bg-[#F7F3EE] font-sans text-[#2B2B2B]">
+<header class="flex h-16 items-center gap-3 border-b border-[#6F4E37] px-4 lg:h-20 lg:gap-8 lg:px-7 print:hidden">
+<div class="grid h-10 w-10 shrink-0 place-items-center rounded-full border-[3px] border-[#6F4E37] font-serif text-2xl text-[#6F4E37] lg:h-12 lg:w-12 lg:border-4 lg:text-3xl">R</div>
+<span class="font-serif text-2xl text-[#6F4E37] lg:text-4xl">Regal Coffe</span>
+<a href="kasir.html" class="ml-auto flex h-10 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 text-xs text-gray-500 lg:ml-0 lg:h-12 lg:w-60 lg:gap-3 lg:px-4"><span class="text-xl text-black">&larr;</span>Kembali</a>
+</header>
+<main class="flex min-h-[calc(100vh-4rem)] flex-col lg:min-h-[calc(100vh-5rem)] lg:flex-row">
+<section class="flex-1 p-4 lg:p-9 print:hidden">
+<div class="mx-auto w-full max-w-[600px]">
+<h2 class="font-serif text-3xl font-bold lg:text-4xl">Metode Pembayaran</h2>
+<div class="mt-5 lg:mt-6">
+<div class="flex flex-col items-center">
+<svg class="h-16 w-16 lg:h-20 lg:w-20" viewBox="0 0 24 24" fill="none" stroke="#2B2B2B" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="m7 12.5 3.5 3.5L17 8.5"/></svg>
+<p class="mt-4 text-lg font-bold">Pembayaran Berhasil !</p>
+<p class="mt-1 text-sm text-gray-500">Kembalian <span id="kembalianAtas"></span></p>
+</div>
+<div class="mt-6 flex flex-col gap-4">
+<button onclick="window.print()" class="block w-full rounded-2xl border border-gray-200 bg-white py-4 text-center text-sm">Cetak Struk</button>
+<button onclick="alert('Fitur kirim struk digital belum tersedia.')" class="block w-full rounded-2xl border border-gray-200 bg-white py-4 text-center text-sm">Kirim Struk Digital</button>
+<a href="kasir.html" class="block w-full rounded-full bg-[#6F4E37] py-4 text-center text-sm font-bold text-white transition-colors hover:bg-[#5A3E2B]">Pesanan Baru</a>
+</div>
+</div>
+</div>
+</section>
+
+<aside class="w-full border-t border-[#6F4E37] p-4 lg:w-[420px] lg:border-l lg:border-t-0 lg:p-6 print:w-full print:border-0">
+<h2 class="text-center font-serif text-xl font-bold lg:text-2xl">Regal Coffe<br>Struk Pembelian</h2>
+<div class="mt-3 border-t border-[#6F4E37] pt-3 text-sm leading-6">
+<p>No Transaksi : <span id="noTransaksi"></span></p>
+<p>Tanggal : <span id="tanggal"></span></p>
+<p>Channel : <span id="channel"></span></p>
+<p>Pelanggan : <span id="pelanggan"></span></p>
+</div>
+<div id="items" class="mt-3 space-y-2 border-y border-[#6F4E37] py-3 text-sm"></div>
+<div class="mt-3 space-y-2 text-sm">
+<div class="flex justify-between"><span>Total Harga</span><span id="total"></span></div>
+<div class="flex justify-between"><span id="metode"></span><span id="diterima"></span></div>
+<div class="flex justify-between"><span>Kembali</span><span id="kembali"></span></div>
+</div>
+<p class="mt-6 border-y border-[#6F4E37] py-4 text-center font-serif text-xl font-bold">Terima Kasih</p>
+</aside>
+</main>
+<script>
+function rupiah(angka) {
+  return "Rp" + angka.toLocaleString("id-ID");
+}
+
+// Ambil struk dari server (database) berdasarkan nomor transaksi di alamat (struk.html?no=TS001)
+async function muatStruk() {
+  var strukNo = new URLSearchParams(window.location.search).get("no");
+  if (strukNo == null) {
+    window.location.href = "kasir.html";
+    return;
+  }
+
+  try {
+    var res = await fetch("/api/transaksi/" + encodeURIComponent(strukNo));
+    if (res.status == 401) { window.location.href = "/login.html"; return; }
+    if (res.ok == false) { throw new Error("Struk " + strukNo + " tidak ditemukan"); }
+    var transaksi = await res.json();
+
+    var isi = "";
+    for (var i = 0; i < transaksi.items.length; i++) {
+      var it = transaksi.items[i];
+      isi = isi + '<div class="flex justify-between"><span>' + it.jumlah + 'x ' + it.nama
+        + ' (' + it.kode + ')</span><span class="text-base">' + rupiah(it.harga * it.jumlah) + '</span></div>';
+    }
+    var kembalian = transaksi.diterima - transaksi.total;
+
+    document.getElementById("items").innerHTML = isi;
+    document.getElementById("noTransaksi").textContent = transaksi.no;
+    document.getElementById("tanggal").textContent = transaksi.tanggal;
+    document.getElementById("channel").textContent = transaksi.channel;
+    document.getElementById("pelanggan").textContent = transaksi.pelanggan;
+    document.getElementById("total").textContent = rupiah(transaksi.total);
+    document.getElementById("metode").textContent = transaksi.metode;
+    document.getElementById("diterima").textContent = rupiah(transaksi.diterima);
+    document.getElementById("kembali").textContent = rupiah(kembalian);
+    document.getElementById("kembalianAtas").textContent = "Rp " + kembalian.toLocaleString("id-ID");
+  } catch (err) {
+    alert(err.message);
+    window.location.href = "kasir.html";
+  }
+}
+
+// Kalau struk dibuka dari halaman admin (Cetak Ulang di riwayat), tombolnya kembali ke admin
+if (document.referrer.indexOf("/admin") != -1) {
+  var tautan = document.querySelectorAll('a[href="kasir.html"]');
+  for (var u = 0; u < tautan.length; u++) {
+    if (tautan[u].textContent.indexOf("Pesanan Baru") != -1) {
+      tautan[u].style.display = "none";
+    } else {
+      tautan[u].href = "/admin/riwayat";
+    }
+  }
+}
+
+muatStruk();
+</script>
+</body>
+</html>

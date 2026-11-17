@@ -1,0 +1,245 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Regal Coffe</title><link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>
+tailwind.config = { theme: { extend: { fontFamily: { serif: ['"Playfair Display"', 'serif'], sans: ['Inter', 'sans-serif'] } } } };
+</script></head><body class="min-h-screen bg-[#F7F3EE] font-sans text-[#2B2B2B]"><header class="flex h-20 items-center gap-8 border-b border-[#6F4E37] px-7"><div class="grid h-12 w-12 place-items-center rounded-full border-4 border-[#6F4E37] font-serif text-3xl text-[#6F4E37]">R</div><span class="font-serif text-4xl text-[#6F4E37]">Regal Coffe</span><label class="relative block"><svg class="absolute left-4 top-3.5 h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="kolomCari" oninput="cari()" autocomplete="off" class="h-12 w-80 rounded-xl border border-gray-200 bg-white pl-12 text-sm" placeholder="Cari menu"></label><button onclick="keluar()" class="ml-auto rounded-full border-2 border-[#D64545] px-6 py-2 text-sm font-bold text-[#D64545]">Keluar</button></header>
+<main class="flex min-h-[calc(100vh-5rem)]">
+<section class="flex-1 p-8"><div>
+<!-- Tombol filter kategori. Nilai data-kategori harus SAMA PERSIS dengan nama_kategori di database -->
+<div id="filterKategori" class="mb-8 flex gap-3">
+<button data-kategori="Semua" onclick="pilihKategori('Semua')" class="rounded-full bg-[#6F4E37] px-6 py-2 text-sm text-white">Semua</button>
+<button data-kategori="Coffee" onclick="pilihKategori('Coffee')" class="rounded-full border border-gray-200 bg-white px-6 py-2 text-sm">Coffee</button>
+<button data-kategori="Non Coffee" onclick="pilihKategori('Non Coffee')" class="rounded-full border border-gray-200 bg-white px-6 py-2 text-sm">Non Coffee</button>
+<button data-kategori="Snack" onclick="pilihKategori('Snack')" class="rounded-full border border-gray-200 bg-white px-6 py-2 text-sm">Snack</button>
+<button data-kategori="Food" onclick="pilihKategori('Food')" class="rounded-full border border-gray-200 bg-white px-6 py-2 text-sm">Food</button>
+</div>
+<!-- Kartu menu diisi otomatis oleh fungsi tampilkanMenu() -->
+<div id="daftarMenu" class="grid grid-cols-3 gap-x-6 gap-y-6">
+<p class="text-sm text-gray-500">Memuat menu...</p>
+</div></div>
+</section>
+<aside class="flex w-[400px] flex-col border-l border-[#6F4E37] p-6">
+<div class="flex items-baseline justify-between border-b border-[#6F4E37] pb-3"><h2 class="font-serif text-4xl font-bold">Pesanan</h2><span id="tanggal" class="font-mono text-xs text-gray-500"></span></div>
+<select id="channel" class="mt-6 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm"><option value="Makan Di Tempat">Channel : Makan di tempat</option><option value="Take Away">Channel : Take Away</option><option value="GoFood">Channel : GoFood</option></select>
+<input id="pelanggan" class="mt-4 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm" value="Pelanggan : Ijium">
+<div id="keranjang" class="mt-6 flex-1 space-y-3 overflow-y-auto border-t border-[#6F4E37] pt-4"></div>
+<div class="mt-auto border-t border-[#6F4E37] pt-4"><div class="flex justify-between rounded-xl border border-gray-200 bg-white px-4 py-4 text-sm font-bold"><span>Total</span><span id="total" class="text-base">Rp0</span></div>
+<a id="bayar" href="pembayaran.html" onclick="klikBayar(); return false;" class="mt-4 block rounded-full bg-[#6F4E37] py-4 text-center text-xl font-bold text-white">Bayar</a>
+<button id="hapusSemua" onclick="hapusSemua()" class="mt-3 block w-full rounded-full border border-[#D64545] py-3 text-center text-sm font-bold text-[#D64545]">Hapus Semua</button></div>
+</aside></main><script>
+var keranjang = [];
+var kodeTerpilih = "";
+
+var semuaMenu = [];           // semua menu dari database
+var kategoriAktif = "Semua";  // filter yang sedang dipilih
+var kataKunci = "";           // teks yang diketik di kolom Cari menu (huruf kecil)
+var sedangProses = false;     // mencegah tombol Bayar tertekan dua kali
+
+var kotakKeranjang = document.getElementById("keranjang");
+var teksTotal = document.getElementById("total");
+var tombolBayar = document.getElementById("bayar");
+var tombolHapus = document.getElementById("hapusSemua");
+
+var hariIni = new Date().toLocaleDateString("sv-SE");
+document.getElementById("tanggal").textContent = "Tanggal : " + hariIni.split("-").join(" - ");
+
+function rupiah(angka) {
+  return "Rp" + angka.toLocaleString("id-ID");
+}
+
+// Ambil daftar menu dari server (database), simpan, lalu tampilkan
+async function muatMenu() {
+  try {
+    var res = await fetch("/api/menu");
+    if (res.status == 401) { window.location.href = "/login.html"; return; }
+    if (res.ok == false) { throw new Error("Server menjawab " + res.status); }
+    semuaMenu = await res.json();
+    tampilkanMenu();
+  } catch (err) {
+    document.getElementById("daftarMenu").innerHTML = '<p class="text-sm text-[#D64545]">Menu gagal dimuat: ' + err.message + '</p>';
+  }
+}
+
+// Dipanggil saat tombol kategori ditekan
+function pilihKategori(nama) {
+  kategoriAktif = nama;
+  tampilkanKategori();
+  tampilkanMenu();
+}
+
+// Dipanggil setiap kali isi kolom Cari menu berubah (tiap huruf yang diketik)
+function cari() {
+  kataKunci = document.getElementById("kolomCari").value.trim().toLowerCase();
+  tampilkanMenu();
+}
+
+// Beri warna coklat pada tombol kategori yang sedang aktif
+function tampilkanKategori() {
+  var semuaTombol = document.querySelectorAll("#filterKategori button");
+  for (var i = 0; i < semuaTombol.length; i++) {
+    var tombol = semuaTombol[i];
+    if (tombol.getAttribute("data-kategori") == kategoriAktif) {
+      tombol.className = "rounded-full bg-[#6F4E37] px-6 py-2 text-sm text-white";
+    } else {
+      tombol.className = "rounded-full border border-gray-200 bg-white px-6 py-2 text-sm";
+    }
+  }
+}
+
+// Gambar kartu menu, hanya yang sesuai kategori aktif
+function tampilkanMenu() {
+  var isi = "";
+  var jumlahTampil = 0;
+
+  for (var i = 0; i < semuaMenu.length; i++) {
+    var m = semuaMenu[i];
+    if (kategoriAktif != "Semua" && m.kategori != kategoriAktif) { continue; }
+    if (kataKunci != "" && (m.nama + " " + m.kode).toLowerCase().indexOf(kataKunci) == -1) { continue; }
+
+    jumlahTampil = jumlahTampil + 1;
+    isi = isi + '<div data-kode="' + m.kode + '" data-name="' + m.nama + '" data-price="' + m.harga + '" class="rounded-2xl border border-gray-200 bg-white p-3">'
+      + '<div class="h-[120px] rounded-xl bg-[#E8DAC8]"></div>'
+      + '<p class="mt-4 text-sm font-bold">' + m.nama + '</p>'
+      + '<div class="flex items-center justify-between"><span class="text-sm text-[#6F4E37]">' + rupiah(m.harga) + '</span>'
+      + '<button onclick="tambahMenu(this)" class="h-9 w-9 rounded-full bg-[#6F4E37] text-2xl leading-none text-white">+</button></div></div>';
+  }
+
+  if (jumlahTampil == 0) {
+    var pesan = kataKunci != "" ? "Menu tidak ditemukan." : "Belum ada menu di kategori ini.";
+    isi = '<p class="col-span-3 text-sm text-gray-500">' + pesan + '</p>';
+  }
+
+  document.getElementById("daftarMenu").innerHTML = isi;
+  tampilkan();  // supaya kartu yang terpilih tetap bergaris tebal
+}
+
+function tambahMenu(tombol) {
+  var kartu = tombol.parentElement.parentElement;
+  var kode = kartu.getAttribute("data-kode");
+  var nama = kartu.getAttribute("data-name");
+  var harga = Number(kartu.getAttribute("data-price"));
+
+  kodeTerpilih = kode;
+
+  var sudahAda = false;
+  for (var i = 0; i < keranjang.length; i++) {
+    if (keranjang[i].kode == kode) {
+      keranjang[i].jumlah = keranjang[i].jumlah + 1;
+      sudahAda = true;
+    }
+  }
+  if (sudahAda == false) {
+    keranjang.push({ kode: kode, nama: nama, harga: harga, jumlah: 1 });
+  }
+  tampilkan();
+}
+
+function ubahJumlah(nomor, perubahan) {
+  keranjang[nomor].jumlah = keranjang[nomor].jumlah + perubahan;
+  kodeTerpilih = keranjang[nomor].kode;
+  if (keranjang[nomor].jumlah < 1) {
+    keranjang.splice(nomor, 1);
+    kodeTerpilih = "";
+  }
+  tampilkan();
+}
+
+function tampilkan() {
+  var isi = "";
+  var totalHarga = 0;
+
+  for (var i = 0; i < keranjang.length; i++) {
+    var item = keranjang[i];
+    var subtotal = item.harga * item.jumlah;
+    totalHarga = totalHarga + subtotal;
+
+    isi = isi + '<div class="rounded-xl border border-gray-200 bg-white p-4">'
+      + '<div class="flex justify-between text-sm font-bold"><span>' + item.kode + ' - ' + item.nama + '</span><span>' + rupiah(subtotal) + '</span></div>'
+      + '<div class="mt-2 flex items-center gap-3">'
+      + '<button onclick="ubahJumlah(' + i + ', -1)" class="h-8 w-9 rounded-lg border border-gray-200 text-xl">&minus;</button>'
+      + '<span class="w-6 text-center">' + item.jumlah + '</span>'
+      + '<button onclick="ubahJumlah(' + i + ', 1)" class="h-8 w-9 rounded-lg border border-gray-200 text-xl">+</button>'
+      + '<span class="text-xs text-gray-500">' + rupiah(item.harga) + '</span>'
+      + '</div></div>';
+  }
+
+  kotakKeranjang.innerHTML = isi;
+  teksTotal.textContent = rupiah(totalHarga);
+
+  var semuaKartu = document.querySelectorAll("[data-name]");
+  for (var j = 0; j < semuaKartu.length; j++) {
+    var kartu = semuaKartu[j];
+    if (kartu.getAttribute("data-kode") == kodeTerpilih) {
+      kartu.classList.add("border-2", "border-[#6F4E37]");
+      kartu.classList.remove("border-gray-200");
+    } else {
+      kartu.classList.remove("border-2", "border-[#6F4E37]");
+      kartu.classList.add("border-gray-200");
+    }
+  }
+
+  if (keranjang.length == 0) {
+    tombolBayar.classList.add("opacity-50", "pointer-events-none");
+    tombolHapus.classList.add("opacity-50", "pointer-events-none");
+  } else {
+    tombolBayar.classList.remove("opacity-50", "pointer-events-none");
+    tombolHapus.classList.remove("opacity-50", "pointer-events-none");
+  }
+}
+
+function hapusSemua() {
+  keranjang = [];
+  kodeTerpilih = "";
+  tampilkan();
+}
+
+// Kirim keranjang ke server. Server menyimpannya dan membalas dengan nomor id pesanan,
+// lalu halaman pindah ke pembayaran.html?id=...
+async function klikBayar() {
+  if (keranjang.length == 0 || sedangProses) { return; }
+  sedangProses = true;   // cegah klik dua kali
+
+  // Yang dikirim hanya kode dan jumlah. Nama dan harga diambil server dari database.
+  var daftar = [];
+  for (var i = 0; i < keranjang.length; i++) {
+    daftar.push({ kode: keranjang[i].kode, jumlah: keranjang[i].jumlah });
+  }
+
+  try {
+    var res = await fetch("/api/pesanan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        channel: document.getElementById("channel").value,
+        pelanggan: document.getElementById("pelanggan").value.replace("Pelanggan : ", ""),
+        items: daftar
+      })
+    });
+
+    var hasil = {};
+    try { hasil = await res.json(); } catch (e) {}
+    if (res.status == 401) { window.location.href = "/login.html"; return; }
+    if (res.ok == false) { throw new Error(hasil.error || "Server error " + res.status); }
+
+    window.location.href = "pembayaran.html?id=" + encodeURIComponent(hasil.id);
+  } catch (err) {
+    alert("Gagal membuat pesanan: " + err.message);
+    sedangProses = false;
+  }
+}
+window.addEventListener("pageshow", function () { sedangProses = false; });
+
+// Keluar: akhiri sesi kasir di server, lalu kembali ke halaman login
+async function keluar() {
+  if (keranjang.length > 0 && confirm("Pesanan di keranjang belum dibayar dan akan hilang. Tetap keluar?") == false) { return; }
+  try { await fetch("/api/admin/logout", { method: "POST" }); } catch (err) {}
+  window.location.href = "/login.html";
+}
+
+tampilkan();
+tampilkanKategori();
+muatMenu();
+</script>
+</body></html>

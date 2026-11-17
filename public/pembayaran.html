@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pembayaran - Regal Coffe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>
+tailwind.config = { theme: { extend: { fontFamily: { serif: ['"Playfair Display"', 'serif'], sans: ['Inter', 'sans-serif'] } } } };
+</script>
+</head>
+<body class="min-h-screen bg-[#F7F3EE] font-sans text-[#2B2B2B]">
+<header class="flex h-16 items-center gap-3 border-b border-[#6F4E37] px-4 lg:h-20 lg:gap-8 lg:px-7">
+<div class="grid h-10 w-10 shrink-0 place-items-center rounded-full border-[3px] border-[#6F4E37] font-serif text-2xl text-[#6F4E37] lg:h-12 lg:w-12 lg:border-4 lg:text-3xl">R</div>
+<span class="font-serif text-2xl text-[#6F4E37] lg:text-4xl">Regal Coffe</span>
+<a href="kasir.html" class="ml-auto flex h-10 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 text-xs text-gray-500 lg:ml-0 lg:h-12 lg:w-60 lg:gap-3 lg:px-4"><span class="text-xl text-black">&larr;</span>Kembali</a>
+</header>
+<main class="flex min-h-[calc(100vh-4rem)] flex-col lg:min-h-[calc(100vh-5rem)] lg:flex-row">
+<section class="flex-1 p-4 lg:p-9">
+<div class="mx-auto w-full max-w-[600px]">
+<h2 class="font-serif text-3xl font-bold lg:text-4xl">Metode Pembayaran</h2>
+<div class="mt-5 flex flex-col gap-3 lg:mt-6 lg:gap-4">
+<label class="flex cursor-pointer items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-4 lg:px-6 lg:py-6 has-[:checked]:border-2 has-[:checked]:border-[#6F4E37] has-[:checked]:bg-[#F2E8DC]">
+<input onchange="hitung()" type="radio" name="metode" value="Tunai" class="h-7 w-7 accent-[#6F4E37]" checked>
+<span><span class="block text-xl font-bold lg:text-2xl">Tunai</span><span class="mt-1 block text-xs text-gray-500">Terima uang, hitung kembalian</span></span></label>
+<label class="flex cursor-pointer items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-4 lg:px-6 lg:py-6 has-[:checked]:border-2 has-[:checked]:border-[#6F4E37] has-[:checked]:bg-[#F2E8DC]">
+<input onchange="hitung()" type="radio" name="metode" value="QRIS" class="h-7 w-7 accent-[#6F4E37]">
+<span><span class="block text-xl font-bold lg:text-2xl">QRIS</span></span></label>
+<label class="flex cursor-pointer items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-4 lg:px-6 lg:py-6 has-[:checked]:border-2 has-[:checked]:border-[#6F4E37] has-[:checked]:bg-[#F2E8DC]">
+<input onchange="hitung()" type="radio" name="metode" value="Kartu Debit" class="h-7 w-7 accent-[#6F4E37]">
+<span><span class="block text-xl font-bold lg:text-2xl">Kartu Debit</span></span></label>
+</div>
+<label id="boxUang" class="mt-5 block lg:mt-6"><span class="font-serif text-lg font-bold">Uang Diterima :</span>
+<input id="uang" oninput="formatUang(); hitung();" class="mt-3 h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-base" placeholder="Rp.0"></label>
+<div id="boxQris" class="mt-5 hidden rounded-3xl lg:mt-6 border border-gray-200 bg-white p-6 text-center">
+<p class="font-serif text-lg font-bold">Scan QRIS untuk membayar</p>
+<img src="img/qris.jpeg" alt="QRIS" class="mx-auto mt-4 max-h-[60vh] w-auto max-w-full rounded-xl border border-gray-200 object-contain">
+<p class="mt-3 text-sm text-gray-500">Total : <span id="totalQris" class="font-bold text-[#2B2B2B]"></span></p>
+</div>
+</div>
+</section>
+
+<aside class="flex w-full flex-col border-t border-[#6F4E37] p-4 lg:w-[420px] lg:border-l lg:border-t-0 lg:p-6">
+<h2 class="font-serif text-2xl font-bold lg:text-3xl">Ringkasan Pesanan</h2>
+<div class="mt-3 border-t border-[#6F4E37] pt-3 text-sm leading-6">
+<p>No Transaksi : <span id="noTransaksi"></span></p>
+<p>Tanggal : <span id="tanggal"></span></p>
+<p>Channel : <span id="channel"></span></p>
+<p>Pelanggan : <span id="pelanggan"></span></p>
+</div>
+<div id="items" class="mt-3 space-y-2 border-y border-[#6F4E37] py-3 text-sm"></div>
+<div class="mt-3 space-y-2">
+<div class="flex justify-between"><span>Total Tagihan</span><span id="tagihan"></span></div>
+<div class="flex justify-between"><span>Uang Diterima</span><span id="diterima"></span></div>
+</div>
+<div class="mt-4 flex justify-between rounded-xl bg-[#F2E8DC] px-4 py-3 text-sm font-bold"><span>Kembalian</span><span id="kembalian" class="text-[#5A3E2B]"></span></div>
+<div class="sticky bottom-0 -mx-4 mt-6 border-t border-[#6F4E37] bg-[#F7F3EE] px-4 pb-4 pt-4 lg:static lg:mx-0 lg:px-0 lg:pb-0">
+<a href="kasir.html" class="block w-full rounded-full border-2 border-[#6F4E37] bg-white py-3 text-center text-sm font-bold text-[#6F4E37]">Batal</a>
+<a id="bayar" href="struk.html" onclick="klikBayar(); return false;" class="mt-3 block w-full rounded-full bg-[#6F4E37] py-3 text-center text-sm font-bold text-white">Bayar</a>
+</div>
+</aside>
+</main>
+<script>
+      var pesananId = new URLSearchParams(window.location.search).get("id");
+
+      var pesanan = [];
+
+      var kotakUang = document.getElementById("boxUang");
+      var kotakQris = document.getElementById("boxQris");
+      var kolomUang = document.getElementById("uang");
+      var tombolBayar = document.getElementById("bayar");
+
+      var totalTagihan = 0;
+      var metode = "Tunai";
+      var uangDiterima = 0;
+      var cukup = false;
+      var sedangProses = false;
+
+      function rupiah(angka) {
+        return "Rp" + angka.toLocaleString("id-ID");
+      }
+
+      document.getElementById("noTransaksi").textContent = "Dibuat saat bayar";
+
+      async function muatPesanan() {
+        if (pesananId == null) {
+          window.location.href = "kasir.html";
+          return;
+        }
+
+        try {
+          var res = await fetch(
+            "/api/pesanan/" + encodeURIComponent(pesananId),
+          );
+          if (res.status == 401) {
+            window.location.href = "/login.html";
+            return;
+          }
+          if (res.ok == false) {
+            throw new Error("Pesanan tidak ditemukan atau sudah kedaluwarsa");
+          }
+          var data = await res.json();
+
+          pesanan = data.items;
+          totalTagihan = 0;
+
+          var isi = "";
+          for (var i = 0; i < pesanan.length; i++) {
+            var subtotal = pesanan[i].harga * pesanan[i].jumlah;
+            totalTagihan = totalTagihan + subtotal;
+            isi =
+              isi +
+              '<div class="flex justify-between"><span>' +
+              pesanan[i].jumlah +
+              "x " +
+              pesanan[i].nama +
+              ' <span class="text-xs text-gray-500">' +
+              rupiah(pesanan[i].harga) +
+              "</span></span>" +
+              '<span class="text-base">' +
+              rupiah(subtotal) +
+              "</span></div>";
+          }
+
+          document.getElementById("items").innerHTML = isi;
+          document.getElementById("tanggal").textContent = data.tanggal;
+          document.getElementById("channel").textContent = data.channel;
+          document.getElementById("pelanggan").textContent = data.pelanggan;
+          document.getElementById("tagihan").textContent = rupiah(totalTagihan);
+
+          hitung();
+        } catch (err) {
+          alert(err.message);
+          window.location.href = "kasir.html";
+        }
+      }
+
+      function formatUang() {
+        var angka = Number(kolomUang.value.replace(/\D/g, ""));
+        if (angka > 0) {
+          kolomUang.value = "Rp." + angka.toLocaleString("id-ID");
+        } else {
+          kolomUang.value = "";
+        }
+      }
+
+      function hitung() {
+        metode = document.querySelector("input[name=metode]:checked").value;
+
+        if (metode == "QRIS") {
+          kotakQris.classList.remove("hidden");
+          document.getElementById("totalQris").textContent =
+            rupiah(totalTagihan);
+        } else {
+          kotakQris.classList.add("hidden");
+        }
+
+        if (metode == "Tunai") {
+          kotakUang.classList.remove("hidden");
+          uangDiterima = Number(kolomUang.value.replace(/\D/g, ""));
+        } else {
+          kotakUang.classList.add("hidden");
+          uangDiterima = totalTagihan;
+        }
+
+        var kembalian = uangDiterima - totalTagihan;
+        if (kembalian < 0) {
+          kembalian = 0;
+        }
+        cukup = uangDiterima >= totalTagihan && totalTagihan > 0;
+
+        document.getElementById("diterima").textContent = rupiah(uangDiterima);
+        document.getElementById("kembalian").textContent =
+          kembalian.toLocaleString("id-ID");
+
+        if (cukup && sedangProses == false) {
+          tombolBayar.classList.remove("opacity-50", "pointer-events-none");
+        } else {
+          tombolBayar.classList.add("opacity-50", "pointer-events-none");
+        }
+      }
+
+      async function klikBayar() {
+        if (cukup == false || sedangProses) {
+          return;
+        }
+
+        sedangProses = true;
+        hitung();
+
+        try {
+          var res = await fetch("/api/transaksi", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              pesananId: pesananId,
+              metode: metode,
+              diterima: uangDiterima,
+            }),
+          });
+
+          var hasil = {};
+          try {
+            hasil = await res.json();
+          } catch (e) {}
+          if (res.status == 401) {
+            window.location.href = "/login.html";
+            return;
+          }
+          if (res.ok == false) {
+            throw new Error(hasil.error || "Server error " + res.status);
+          }
+
+          window.location.href =
+            "struk.html?no=" + encodeURIComponent(hasil.no);
+        } catch (err) {
+          alert("Transaksi gagal disimpan: " + err.message);
+          sedangProses = false;
+          hitung();
+        }
+      }
+
+      hitung();
+      muatPesanan();
+    </script>
+</body>
+</html>

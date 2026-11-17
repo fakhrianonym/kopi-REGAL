@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laporan - Regal Coffe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>
+tailwind.config = { theme: { extend: { fontFamily: { serif: ['"Playfair Display"', 'serif'], sans: ['Inter', 'sans-serif'] } } } };
+</script>
+</head>
+<body class="min-h-screen bg-[#F7F3EE] font-sans text-[#2B2B2B]">
+<header class="flex flex-wrap items-center gap-x-3 gap-y-3 border-b border-[#6F4E37] px-4 py-3 lg:h-20 lg:flex-nowrap lg:gap-8 lg:px-7 lg:py-0">
+<div class="grid h-10 w-10 shrink-0 place-items-center rounded-full border-[3px] border-[#6F4E37] font-serif text-2xl text-[#6F4E37] lg:h-12 lg:w-12 lg:border-4 lg:text-3xl">R</div>
+<span class="whitespace-nowrap font-serif text-2xl text-[#6F4E37] lg:text-4xl">Regal Coffe</span>
+<nav class="order-last flex w-full gap-2 overflow-x-auto pb-1 lg:order-none lg:w-auto lg:gap-3 lg:overflow-visible lg:pb-0">
+<a href="/admin" class="shrink-0 whitespace-nowrap rounded-full border border-gray-200 bg-white px-4 py-2 text-sm lg:px-5">Dashboard</a>
+<a href="/admin/menu" class="shrink-0 whitespace-nowrap rounded-full border border-gray-200 bg-white px-4 py-2 text-sm lg:px-5">Kelola Menu</a>
+<a href="/admin/riwayat" class="shrink-0 whitespace-nowrap rounded-full border border-gray-200 bg-white px-4 py-2 text-sm lg:px-5">Riwayat Transaksi</a>
+<a href="/admin/laporan" class="shrink-0 whitespace-nowrap rounded-full bg-[#6F4E37] px-4 py-2 text-sm text-white lg:px-5">Laporan</a>
+</nav>
+<span id="namaAdmin" class="hidden text-sm text-gray-500 lg:ml-auto lg:block"></span>
+<button onclick="keluar()" class="ml-auto rounded-full border-2 border-[#D64545] px-4 py-1.5 text-xs font-bold text-[#D64545] lg:ml-0 lg:px-6 lg:py-2 lg:text-sm">Keluar</button>
+</header>
+
+<main class="flex flex-col lg:min-h-[calc(100vh-5rem)] lg:flex-row">
+<section class="min-w-0 flex-1 p-4 lg:p-8">
+<div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+<div>
+<h1 class="font-serif text-3xl font-bold lg:text-4xl">Laporan</h1>
+<p id="labelPeriode" class="mt-2 text-xs text-gray-500">Memuat data...</p>
+</div>
+<div class="relative flex flex-wrap items-center gap-2 lg:gap-3">
+<button data-kode="hari" onclick="pilihPeriode('hari')" class="chip">Hari Ini</button>
+<button data-kode="7" onclick="pilihPeriode('7')" class="chip">7 Hari</button>
+<button data-kode="30" onclick="pilihPeriode('30')" class="chip">30 Hari</button>
+<button data-kode="bulan" onclick="pilihPeriode('bulan')" class="chip">Bulan Ini</button>
+<button data-kode="custom" onclick="bukaTanggal()" class="chip flex items-center gap-2">
+<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Pilih tanggal</button>
+
+<div id="panelTanggal" class="absolute right-0 top-12 z-10 hidden w-72 rounded-2xl border border-gray-200 bg-white p-4 shadow-lg">
+<label class="block text-xs text-gray-500">Dari</label>
+<input id="tglDari" type="date" class="mt-1 h-10 w-full rounded-xl border border-gray-200 px-3 text-sm">
+<label class="mt-3 block text-xs text-gray-500">Sampai</label>
+<input id="tglSampai" type="date" class="mt-1 h-10 w-full rounded-xl border border-gray-200 px-3 text-sm">
+<p id="pesanTanggal" class="mt-2 min-h-[1rem] text-xs text-[#D64545]"></p>
+<button onclick="terapkanTanggal()" class="mt-2 block w-full rounded-full bg-[#6F4E37] py-2 text-sm font-bold text-white">Terapkan</button>
+</div>
+</div>
+</div>
+
+<!-- Kartu ringkasan periode -->
+<div class="mt-5 grid grid-cols-2 gap-3 lg:mt-6 lg:gap-4 xl:grid-cols-4">
+<div class="rounded-2xl border border-gray-200 bg-white p-4"><p class="text-xs text-gray-500">Total Penjualan</p><p id="kPenjualan" class="mt-1 break-words text-xl font-bold text-[#6F4E37] 2xl:text-2xl">Rp0</p><p id="dPenjualan" class="mt-1 text-xs text-gray-500">-</p></div>
+<div class="rounded-2xl border border-gray-200 bg-white p-4"><p class="text-xs text-gray-500">Total HPP</p><p id="kHpp" class="mt-1 break-words text-xl font-bold text-[#6F4E37] 2xl:text-2xl">Rp0</p><p id="dHpp" class="mt-1 text-xs text-gray-500">-</p></div>
+<div class="rounded-2xl border border-gray-200 bg-white p-4"><p class="text-xs text-gray-500">Laba Kotor</p><p id="kLaba" class="mt-1 break-words text-xl font-bold text-[#6F4E37] 2xl:text-2xl">Rp0</p><p class="mt-1 text-xs text-gray-500">Penjualan &minus; HPP</p></div>
+<div class="rounded-2xl border border-gray-200 bg-white p-4"><p class="text-xs text-gray-500">Transaksi</p><p id="kTransaksi" class="mt-1 break-words text-xl font-bold text-[#6F4E37] 2xl:text-2xl">0</p><p id="dTransaksi" class="mt-1 text-xs text-gray-500">-</p></div>
+</div>
+
+<!-- Grafik penjualan vs HPP -->
+<div class="mt-6 rounded-2xl border border-gray-200 bg-white p-5">
+<div class="flex items-center justify-between">
+<h2 class="font-serif text-xl font-bold">Penjualan vs HPP</h2>
+<div class="flex items-center gap-4 text-xs text-gray-500">
+<span class="flex items-center gap-2"><span class="inline-block h-3 w-3 rounded-sm bg-[#6F4E37]"></span>Penjualan</span>
+<span class="flex items-center gap-2"><span class="inline-block h-3 w-3 rounded-sm bg-[#E8DAC8]"></span>HPP</span>
+</div>
+</div>
+<div id="grafik" class="mt-4 flex h-[210px] items-end gap-1 lg:gap-2"></div>
+</div>
+
+<!-- Rincian per menu -->
+<div class="mt-6 rounded-2xl border border-gray-200 bg-white p-5">
+<div class="flex items-center justify-between">
+<h2 class="font-serif text-xl font-bold">Rincian per Menu</h2>
+<button id="btnSemua" onclick="ubahSemua()" class="text-sm font-bold text-[#6F4E37]">Lihat semua &rarr;</button>
+</div>
+<table class="mt-3 w-full text-left text-xs sm:text-sm">
+<thead><tr class="border-b border-[#6F4E37]"><th class="pb-2">Menu</th><th class="pb-2">Terjual</th><th class="pb-2">Penjualan</th><th class="hidden pb-2 sm:table-cell">HPP</th><th class="pb-2">Laba</th></tr></thead>
+<tbody id="tabelMenu"></tbody>
+</table>
+<p id="kosongMenu" class="mt-4 hidden text-sm text-gray-500">Belum ada penjualan pada periode ini.</p>
+</div>
+</section>
+
+<aside class="w-full border-t border-[#6F4E37] p-4 lg:w-[420px] lg:border-l lg:border-t-0 lg:p-6">
+<h2 class="font-serif text-2xl font-bold">Ringkasan</h2>
+<div class="mt-3 border-t border-[#6F4E37] py-4">
+<div class="flex items-baseline justify-between"><span class="text-xs text-gray-500">Margin laba kotor</span><span id="sMargin" class="text-2xl font-bold text-[#6F4E37]">0%</span></div>
+<div class="mt-2 h-1.5 rounded-full bg-[#E8DAC8]"><div id="sMarginBar" class="h-1.5 rounded-full bg-[#6F4E37]" style="width:2%"></div></div>
+</div>
+
+<h2 class="mt-4 font-serif text-xl font-bold">Penjualan per Channel</h2>
+<div id="listChannel" class="mt-3 space-y-4 border-t border-[#6F4E37] py-4"></div>
+
+<h2 class="mt-4 font-serif text-xl font-bold">Metode Pembayaran</h2>
+<div id="listMetode" class="mt-3 space-y-4 border-t border-[#6F4E37] py-4"></div>
+</aside>
+</main>
+
+<style>
+.chip { border-radius: 9999px; border: 1px solid #E5E7EB; background: #fff; padding: 0.5rem 1rem; font-size: 0.875rem; white-space: nowrap; }
+@media (max-width: 640px) { .chip { padding: 0.4rem 0.75rem; font-size: 0.8rem; } }
+.chip-aktif { background: #6F4E37; border-color: #6F4E37; color: #fff; }
+</style>
+
+<script>
+var HARI_SINGKAT = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+var NAMA_BULAN = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+var periodeAktif = "7";      // hari | 7 | 30 | bulan | custom
+var dari = "";
+var sampai = "";
+var dataMenu = [];
+var dataGrafik = [];         // disimpan supaya grafik bisa digambar ulang saat ukuran layar berubah
+var timerUkuran = null;
+var semuaTampil = false;
+var nomorPermintaan = 0;     // supaya hasil permintaan lama tidak menimpa yang baru
+
+function rupiah(angka) {
+  return "Rp" + Number(angka).toLocaleString("id-ID");
+}
+
+// Buat elemen dengan teks aman (tidak memakai innerHTML)
+function el(tag, kelas, teks) {
+  var e = document.createElement(tag);
+  if (kelas) { e.className = kelas; }
+  if (teks !== undefined) { e.textContent = teks; }
+  return e;
+}
+
+// 1.245.000 -> "1,25 jt", 820.000 -> "820 rb"
+function singkat(angka) {
+  if (angka >= 1000000) { return (angka / 1000000).toFixed(2).replace(".", ",") + " jt"; }
+  if (angka > 0) { return Math.round(angka / 1000) + " rb"; }
+  return "0";
+}
+
+function tglLokal(selisih) {
+  var d = new Date();
+  d.setDate(d.getDate() + selisih);
+  return d.toLocaleDateString("sv-SE");
+}
+
+function awalBulan() {
+  var d = new Date();
+  d.setDate(1);
+  return d.toLocaleDateString("sv-SE");
+}
+
+// "2026-11-07","2026-11-13" -> "7 – 13 November 2026"
+function labelPeriode(a, b) {
+  var pa = a.split("-");
+  var pb = b.split("-");
+  if (a == b) { return Number(pb[2]) + " " + NAMA_BULAN[pb[1] - 1] + " " + pb[0]; }
+  if (pa[0] == pb[0] && pa[1] == pb[1]) {
+    return Number(pa[2]) + " – " + Number(pb[2]) + " " + NAMA_BULAN[pb[1] - 1] + " " + pb[0];
+  }
+  if (pa[0] == pb[0]) {
+    return Number(pa[2]) + " " + NAMA_BULAN[pa[1] - 1] + " – " + Number(pb[2]) + " " + NAMA_BULAN[pb[1] - 1] + " " + pb[0];
+  }
+  return Number(pa[2]) + " " + NAMA_BULAN[pa[1] - 1] + " " + pa[0] + " – " + Number(pb[2]) + " " + NAMA_BULAN[pb[1] - 1] + " " + pb[0];
+}
+
+// ===== Pilihan periode =====
+function tandaiChip() {
+  var semua = document.querySelectorAll(".chip");
+  for (var i = 0; i < semua.length; i++) {
+    semua[i].classList.toggle("chip-aktif", semua[i].getAttribute("data-kode") == periodeAktif);
+  }
+}
+
+function pilihPeriode(kode) {
+  periodeAktif = kode;
+  document.getElementById("panelTanggal").classList.add("hidden");
+  sampai = tglLokal(0);
+  if (kode == "hari") { dari = sampai; }
+  else if (kode == "7") { dari = tglLokal(-6); }
+  else if (kode == "30") { dari = tglLokal(-29); }
+  else if (kode == "bulan") { dari = awalBulan(); }
+  tandaiChip();
+  muat();
+}
+
+function bukaTanggal() {
+  var panel = document.getElementById("panelTanggal");
+  if (panel.classList.contains("hidden")) {
+    document.getElementById("tglDari").value = dari;
+    document.getElementById("tglSampai").value = sampai;
+    document.getElementById("pesanTanggal").textContent = "";
+  }
+  panel.classList.toggle("hidden");
+}
+
+function terapkanTanggal() {
+  var a = document.getElementById("tglDari").value;
+  var b = document.getElementById("tglSampai").value;
+  var pesan = document.getElementById("pesanTanggal");
+  if (a == "" || b == "") { pesan.textContent = "Isi kedua tanggal."; return; }
+  if (a > b) { pesan.textContent = "Tanggal awal tidak boleh setelah tanggal akhir."; return; }
+  periodeAktif = "custom";
+  dari = a;
+  sampai = b;
+  document.getElementById("panelTanggal").classList.add("hidden");
+  tandaiChip();
+  muat();
+}
+
+// ===== Kartu ringkasan =====
+function gambarKartu(d) {
+  var t = d.total;
+  document.getElementById("kPenjualan").textContent = rupiah(t.penjualan);
+  document.getElementById("kHpp").textContent = rupiah(t.hpp);
+  document.getElementById("kLaba").textContent = rupiah(t.laba);
+  document.getElementById("kTransaksi").textContent = t.transaksi;
+
+  var dp = document.getElementById("dPenjualan");
+  dp.className = "mt-1 text-xs";
+  if (d.sebelumnya.penjualan <= 0) {
+    dp.textContent = "Belum ada data periode lalu";
+    dp.classList.add("text-gray-500");
+  } else {
+    var persen = Math.round((t.penjualan - d.sebelumnya.penjualan) / d.sebelumnya.penjualan * 100);
+    dp.textContent = (persen >= 0 ? "▲ " : "▼ ") + Math.abs(persen) + "% dari periode lalu";
+    dp.classList.add(persen >= 0 ? "text-green-700" : "text-[#D64545]");
+  }
+
+  document.getElementById("dHpp").textContent =
+    t.penjualan > 0 ? Math.round(t.hpp / t.penjualan * 100) + "% dari penjualan" : "Belum ada penjualan";
+  document.getElementById("dTransaksi").textContent =
+    t.transaksi > 0 ? "Rata-rata " + rupiah(Math.round(t.penjualan / t.transaksi)) : "Belum ada transaksi";
+}
+
+// ===== Grafik batang berpasangan =====
+function gambarGrafik(data) {
+  var kotak = document.getElementById("grafik");
+  kotak.innerHTML = "";
+  var n = data.length;
+  var maks = 0;
+  for (var i = 0; i < n; i++) {
+    if (data[i].penjualan > maks) { maks = data[i].penjualan; }
+    if (data[i].hpp > maks) { maks = data[i].hpp; }
+  }
+  var tinggiMaks = 150;
+  // Lebar batang menyesuaikan lebar kotak grafik, supaya tidak meluber di layar kecil
+  var lebarKotak = kotak.clientWidth || 300;
+  var perKolom = (lebarKotak - 4 * (n - 1)) / n;
+  var lebar = Math.max(3, Math.min(28, Math.floor((perKolom - 4) / 2)));
+  var langkah = perKolom < 18 ? 2 : 1;   // layar sempit: label tanggal tampil selang-seling
+
+  function tinggi(nilai) {
+    return maks > 0 ? Math.max(3, Math.round(nilai / maks * tinggiMaks)) : 3;
+  }
+
+  for (var j = 0; j < n; j++) {
+    var d = data[j];
+    var kolom = el("div", "flex min-w-0 flex-1 flex-col items-center justify-end gap-2");
+    kolom.title = d.tanggal + " · Penjualan " + rupiah(d.penjualan) + " · HPP " + rupiah(d.hpp);
+
+    if (n <= 7) { kolom.appendChild(el("span", "text-[10px] text-gray-500 lg:text-[11px]", singkat(d.penjualan))); }
+
+    var pasang = el("div", "flex items-end gap-1");
+    var b1 = el("div", "rounded-t-md bg-[#6F4E37]");
+    b1.style.width = lebar + "px";
+    b1.style.height = tinggi(d.penjualan) + "px";
+    var b2 = el("div", "rounded-t-md bg-[#E8DAC8]");
+    b2.style.width = lebar + "px";
+    b2.style.height = tinggi(d.hpp) + "px";
+    pasang.appendChild(b1);
+    pasang.appendChild(b2);
+    kolom.appendChild(pasang);
+
+    var label = n <= 7 ? HARI_SINGKAT[new Date(d.tanggal + "T00:00:00").getDay()] : (j % langkah == 0 ? String(Number(d.tanggal.slice(8))) : "");
+    kolom.appendChild(el("span", "text-[10px] text-gray-500 lg:text-xs", label));
+    kotak.appendChild(kolom);
+  }
+}
+
+// ===== Rincian per menu =====
+function gambarMenu() {
+  var tbody = document.getElementById("tabelMenu");
+  tbody.innerHTML = "";
+  var batas = semuaTampil ? dataMenu.length : 5;
+
+  for (var i = 0; i < dataMenu.length && i < batas; i++) {
+    var m = dataMenu[i];
+    var baris = el("tr", "border-b border-gray-200");
+    baris.appendChild(el("td", "py-3 font-bold", m.nama));
+    baris.appendChild(el("td", "py-3", m.terjual));
+    baris.appendChild(el("td", "whitespace-nowrap py-3", rupiah(m.penjualan)));
+    baris.appendChild(el("td", "hidden py-3 sm:table-cell", rupiah(m.hpp)));
+    baris.appendChild(el("td", "whitespace-nowrap py-3 font-bold " + (m.laba < 0 ? "text-[#D64545]" : "text-[#2F7D4F]"), rupiah(m.laba)));
+    tbody.appendChild(baris);
+  }
+
+  document.getElementById("kosongMenu").classList.toggle("hidden", dataMenu.length > 0);
+  var tombol = document.getElementById("btnSemua");
+  tombol.classList.toggle("hidden", dataMenu.length <= 5);
+  tombol.textContent = semuaTampil ? "Ringkas ↑" : "Lihat semua →";
+}
+
+function ubahSemua() {
+  semuaTampil = !semuaTampil;
+  gambarMenu();
+}
+
+// ===== Daftar dengan batang kemajuan (channel dan metode) =====
+function gambarDaftar(idKotak, daftar) {
+  var kotak = document.getElementById(idKotak);
+  kotak.innerHTML = "";
+  if (daftar.length == 0) {
+    kotak.appendChild(el("p", "text-sm text-gray-500", "Belum ada penjualan."));
+    return;
+  }
+  var jumlah = 0;
+  for (var i = 0; i < daftar.length; i++) { jumlah = jumlah + daftar[i].total; }
+
+  for (var j = 0; j < daftar.length; j++) {
+    var persen = jumlah > 0 ? daftar[j].total / jumlah * 100 : 0;
+    var baris = el("div");
+    var atas = el("div", "flex items-baseline justify-between");
+    atas.appendChild(el("span", "text-sm font-bold", daftar[j].nama));
+    atas.appendChild(el("span", "text-xs text-gray-500", Math.round(persen) + "%"));
+    var jalur = el("div", "mt-2 h-1.5 rounded-full bg-[#E8DAC8]");
+    var isi = el("div", "h-1.5 rounded-full bg-[#6F4E37]");
+    isi.style.width = Math.max(2, Math.round(persen)) + "%";
+    jalur.appendChild(isi);
+    baris.appendChild(atas);
+    baris.appendChild(jalur);
+    kotak.appendChild(baris);
+  }
+}
+
+function gambarRingkasan(d) {
+  var margin = d.total.penjualan > 0 ? Math.round(d.total.laba / d.total.penjualan * 100) : 0;
+  document.getElementById("sMargin").textContent = margin + "%";
+  document.getElementById("sMarginBar").style.width = Math.max(2, Math.min(100, margin)) + "%";
+}
+
+function gambarSemua(d) {
+  document.getElementById("labelPeriode").textContent = "Periode " + labelPeriode(d.dari, d.sampai);
+  gambarKartu(d);
+  dataGrafik = d.grafik;
+  gambarGrafik(d.grafik);
+  dataMenu = d.menu;
+  gambarMenu();
+  gambarRingkasan(d);
+  gambarDaftar("listChannel", d.channel);
+  gambarDaftar("listMetode", d.metode);
+}
+
+async function muat() {
+  nomorPermintaan = nomorPermintaan + 1;
+  var saya = nomorPermintaan;
+  try {
+    var res = await fetch("/api/admin/laporan?dari=" + encodeURIComponent(dari) + "&sampai=" + encodeURIComponent(sampai));
+    if (res.status == 401) { window.location.href = "/login.html"; return; }
+    var hasil = {};
+    try { hasil = await res.json(); } catch (e) {}
+    if (res.ok == false) { throw new Error(hasil.error || "Server menjawab " + res.status); }
+    if (saya != nomorPermintaan) { return; }   // sudah ada permintaan yang lebih baru
+    gambarSemua(hasil);
+  } catch (err) {
+    document.getElementById("labelPeriode").textContent = "Laporan gagal dimuat: " + err.message;
+  }
+}
+
+async function tampilkanNama() {
+  try {
+    var res = await fetch("/api/admin/check");
+    if (res.status == 401) { window.location.href = "/login.html"; return; }
+    var d = await res.json();
+    document.getElementById("namaAdmin").textContent = "Halo, " + d.admin.username;
+  } catch (err) {}
+}
+
+async function keluar() {
+  await fetch("/api/admin/logout", { method: "POST" });
+  window.location.href = "/login.html";
+}
+
+window.addEventListener("resize", function () {
+  clearTimeout(timerUkuran);
+  timerUkuran = setTimeout(function () {
+    if (dataGrafik.length > 0) { gambarGrafik(dataGrafik); }
+  }, 150);
+});
+
+tampilkanNama();
+pilihPeriode("7");
+</script>
+</body>
+</html>

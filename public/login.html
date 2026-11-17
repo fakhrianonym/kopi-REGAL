@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Masuk - Regal Coffe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>
+tailwind.config = { theme: { extend: { fontFamily: { serif: ['"Playfair Display"', 'serif'], sans: ['Inter', 'sans-serif'] } } } };
+</script>
+</head>
+<body class="min-h-screen bg-[#F7F3EE] font-sans text-[#2B2B2B]">
+<header class="flex h-20 items-center gap-8 border-b border-[#6F4E37] px-7">
+<div class="grid h-12 w-12 place-items-center rounded-full border-4 border-[#6F4E37] font-serif text-3xl text-[#6F4E37]">R</div>
+<span class="font-serif text-4xl text-[#6F4E37]">Regal Coffe</span>
+</header>
+
+<main class="grid min-h-[calc(100vh-5rem)] place-items-center p-6">
+<div class="w-full max-w-[410px] rounded-3xl border border-gray-200 bg-white p-8">
+<span class="rounded-full bg-[#F2E8DC] px-3 py-1 text-[10px] font-bold tracking-wide text-[#5A3E2B]">AREA LOGIN</span>
+<h1 class="mt-5 font-serif text-3xl font-bold">Masuk</h1>
+<p class="mt-4 text-sm text-gray-500">Masuk menggunakan akun Admin atau Kasir untuk melanjutkan.</p>
+
+<p id="pesanError" class="mt-5 hidden rounded-xl border border-[#D64545] bg-[#FDE2E2] px-4 py-3 text-center text-sm text-[#D64545]"></p>
+
+<label class="mt-5 block text-xs font-bold text-[#5A3E2B]">Username</label>
+<input id="username" autocomplete="username" class="mt-2 h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm" onkeydown="if (event.key === 'Enter') masuk()">
+
+<label class="mt-4 block text-xs font-bold text-[#5A3E2B]">Password</label>
+<div class="relative mt-2">
+<input id="password" type="password" autocomplete="current-password" class="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 pr-28 text-sm" onkeydown="if (event.key === 'Enter') masuk()">
+<button id="btnLihat" type="button" onclick="lihatPassword()" class="absolute right-4 top-3.5 text-xs font-bold text-[#6F4E37]">Tampilkan</button>
+</div>
+
+<button id="btnMasuk" onclick="masuk()" class="mt-6 block w-full rounded-full bg-[#6F4E37] py-3 text-lg font-bold text-white">Masuk</button>
+<p class="mt-5 text-center text-xs text-gray-500">Regal Coffe &middot; Sistem Kasir</p>
+</div>
+</main>
+
+<script>
+var sedangProses = false;
+
+function lihatPassword() {
+  var kolom = document.getElementById("password");
+  var tampil = kolom.type === "password";
+  kolom.type = tampil ? "text" : "password";
+  document.getElementById("btnLihat").textContent = tampil ? "Sembunyikan" : "Tampilkan";
+}
+
+function bersihkanError() {
+  document.getElementById("pesanError").classList.add("hidden");
+  var kolom = document.getElementById("password");
+  kolom.classList.remove("border-2", "border-[#D64545]");
+  kolom.classList.add("border-gray-200");
+}
+
+function tampilkanError(pesan) {
+  var kotak = document.getElementById("pesanError");
+  kotak.textContent = pesan;
+  kotak.classList.remove("hidden");
+  var kolom = document.getElementById("password");
+  kolom.classList.remove("border-gray-200");
+  kolom.classList.add("border-2", "border-[#D64545]");
+}
+
+async function masuk() {
+  if (sedangProses) { return; }
+  bersihkanError();
+
+  var username = document.getElementById("username").value.trim();
+  var password = document.getElementById("password").value;
+  if (username === "" || password === "") {
+    tampilkanError("Username dan password wajib diisi.");
+    return;
+  }
+
+  sedangProses = true;
+  var tombol = document.getElementById("btnMasuk");
+  tombol.textContent = "Memeriksa...";
+  tombol.disabled = true;
+
+  try {
+    var res = await fetch("/api/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: username, password: password })
+    });
+    var hasil = {};
+    try { hasil = await res.json(); } catch (e) {}
+    if (!res.ok) { throw new Error(hasil.error || "Login gagal."); }
+
+    if (hasil.role === "admin") {
+      window.location.href = "/admin";
+    } else if (hasil.role === "kasir") {
+      window.location.href = "/kasir";
+    } else {
+      throw new Error("Peran akun tidak dikenali.");
+    }
+  } catch (err) {
+    tampilkanError(err.message);
+    tombol.textContent = "Masuk";
+    tombol.disabled = false;
+    sedangProses = false;
+  }
+}
+</script>
+</body>
+</html>
